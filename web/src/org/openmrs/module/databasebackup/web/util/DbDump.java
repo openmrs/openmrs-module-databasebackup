@@ -42,7 +42,7 @@ public class DbDump {
 	protected final static Log log = LogFactory.getLog(DbDump.class);
 	
     /** Dump the whole database to an SQL string */
-    public static String dumpDB(Properties props) {
+    public static void dumpDB(Properties props) {
     	String filename = props.getProperty("filename");
     	String folder= props.getProperty("folder");
         String driverClassName = props.getProperty("driver.class");
@@ -58,11 +58,12 @@ public class DbDump {
         }
         catch( Exception e ) {
             System.err.println("Unable to connect to database: "+e);
-            return null;
+            //return null;
         }
 
         try {
-            FileOutputStream result = new FileOutputStream(folder + filename); 
+            FileOutputStream result = new FileOutputStream(folder + filename);
+                        
             String catalog = props.getProperty("catalog");
             String schema = props.getProperty("schemaPattern");
             
@@ -104,12 +105,12 @@ public class DbDump {
 
                     	progressCnt++;
                     	BackupFormController.getProgressInfo().put(filename, "Backing up table " + progressCnt + " of " + progressTotal + " (" + tableName + ")...");                    	
-                    	result.write("".getBytes());
                     	
 	                    if ("TABLE".equalsIgnoreCase(tableType)) {
+
 	                    	result.write( ("\n\n-- "+tableName).getBytes() );
 	                    	result.write( ("\nCREATE TABLE "+tableName+" (\n").getBytes() );
-	                        ResultSet tableMetaData = dbMetaData.getColumns(null, null, tableName, "%");
+	                        ResultSet tableMetaData = dbMetaData.getColumns(null, null, tableName, "%");	                        
 	                        boolean firstLine = true;
 	                        while (tableMetaData.next()) {
 	                            if (firstLine) {
@@ -166,9 +167,9 @@ public class DbDump {
 	                        } catch (SQLException e) {
 	                        	log.error("Unable to get primary keys for table "+tableName+".", e);
 	                        }
-	
+
 	                        result.write("\n);\n".getBytes());
-	
+
 	                        dumpTable(dbConn, result, tableName);
 	                        System.gc();
 	                    }
@@ -181,13 +182,13 @@ public class DbDump {
             result.close();
             
             dbConn.close();
-            return result.toString();
+            //return result.toString();
         } catch (SQLException e) {
             log.error("An error occured. ", e);  //To change body of catch statement use Options | File Templates.
         } catch (IOException e) {
             log.error("An error occured. ", e);  //To change body of catch statement use Options | File Templates.
         }
-        return null;
+        //return null;
     }
 
     /** dump this particular table to the string buffer */
@@ -228,18 +229,5 @@ public class DbDump {
         }
     }	
 
-    /** Main method takes arguments for connection to JDBC etc. */
-    public static void main(String[] args) {    	
-        Properties props = new Properties();        
-        try {
-            props.load(new FileInputStream("openmrs-runtime.properties"));
-            FileOutputStream out = new FileOutputStream("openmrs.backup.sql");
-            
-            //System.out.println(dumpDB(props));
-            out.write(dumpDB(props).getBytes());
-        } catch (IOException e) {
-        	log.error("Unable to open property file: "+args[0]+" exception: ", e);
-        }
 
-    }
 }

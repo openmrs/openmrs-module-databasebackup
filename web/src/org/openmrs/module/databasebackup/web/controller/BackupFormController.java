@@ -117,20 +117,16 @@ public class BackupFormController extends SimpleFormController {
 					try {
 						UserContext ctxInThread = ctx;
 						String filenameInThread = filename;
-						FileOutputStream out = new FileOutputStream(folder + filenameInThread);
-						out.write(DbDump.dumpDB(props).getBytes());
-						out.flush();
-						out.close();
-
-
+						DbDump.dumpDB(props);
 						BackupFormController.getProgressInfo().put(filenameInThread, "Zipping file...");
 						
+						// zip sql file
 						Zip.zip(folder, filenameInThread);
+						
 						// remove sql file after zipping it
 						try {
 							File f = new File(folder + filenameInThread);
-							boolean success = f.delete();
-							//log.warn("Delete success: " + success);
+							f.delete();
 						} catch (SecurityException e) {
 							log.error("Could not delete raw sql file.",e);
 						}						
@@ -143,7 +139,7 @@ public class BackupFormController extends SimpleFormController {
 						Context.getAlertService().saveAlert(alert);
 						
 					}
-					catch (IOException e) {
+					catch (Exception e) {
 						System.err.println("Unable to backup database: " + e);
 						log.error("Unable to backup database: ", e);
 					}
