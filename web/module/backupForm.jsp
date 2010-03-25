@@ -29,7 +29,7 @@ function showProgress() {
     </ul>
 </div>
 
-<h2><spring:message code="backup.replace.this.link.name" /></h2>
+<h2><spring:message code="databasebackup.link.backup" /></h2>
 
 <c:if test="${not empty msg}">
     Progress:<div id="progressDisplay">&nbsp;</div>

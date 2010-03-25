@@ -17,7 +17,7 @@
     </ul>
 </div>
 
-<h2><spring:message code="backup.replace.this.link.name.2" /></h2>
+<h2><spring:message code="databasebackup.link.settings" /></h2>
 
 <ul>
 	<li>Enter the tables to be included into the backup comma separated (i.e.: cohort, concept) into field 'databasebackup.tablesIncluded' or use 'all' (default) to include all.</li>
