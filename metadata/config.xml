@@ -6,7 +6,7 @@
 	<!-- Base Module Properties -->
 	<id>databasebackup</id>
 	<name>Database Backup Module</name>
-	<version>0.2</version>
+	<version>0.4</version>
 	<package>org.openmrs.module.@MODULE_ID@</package>
 	<author>Mathias Lin</author>
 	<description>
@@ -43,7 +43,7 @@
 			Enter the tables to be excluded from the backup comma separated (i.e.: hl7_in_archive, hl7_in_error) into field 'databasebackup.tablesExcluded' or use 'all' (default) to exclude all. If you don't want to exclude any tables, you could also leave it to the default value 'none'.
 			Explicitly entered table names overrule any eventual 'all' or 'none' entries in the opposite settings field.
 		</description>
-	</globalProperty>			
+	</globalProperty>  
     <globalProperty>
         <property>@MODULE_ID@.folderPath</property>
         <defaultValue>backup</defaultValue>
