@@ -25,7 +25,7 @@
 	<li>Explicitly entered table names overrule any eventual 'all' or 'none' entries in the opposite settings field.</li>
 </li>  
 <br/>
-<openmrs:globalProperty var="databasebackupTables" key="databasebackup.tables" defaultValue="*"/><br/><br/>
-<openmrs:portlet id="globalProperty" url="globalProperties" parameters="propertyPrefix=databasebackup.tables" /><br/><br/>
+<openmrs:globalProperty var="databasebackupTables" key="databasebackup." defaultValue="*"/><br/><br/>
+<openmrs:portlet id="globalProperty" url="globalProperties" parameters="propertyPrefix=databasebackup." /><br/><br/>
 
 <%@ include file="/WEB-INF/template/footer.jsp"%>

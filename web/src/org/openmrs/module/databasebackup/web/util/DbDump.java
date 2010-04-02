@@ -13,7 +13,6 @@
  */
 package org.openmrs.module.databasebackup.web.util;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;

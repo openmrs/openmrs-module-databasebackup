@@ -34,7 +34,7 @@ function showProgress() {
 <c:if test="${not empty msg}">
     Progress:<div id="progressDisplay">&nbsp;</div>
     <br/><br/>
-    <a href="backup.form">Run another database export</a>
+    <a href="backup.form">Run another database backup</a>
     
     <script>
     document.getElementById("progressDisplay").innerHTML = "Starting...";    

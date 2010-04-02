@@ -6,7 +6,7 @@
 	<!-- Base Module Properties -->
 	<id>databasebackup</id>
 	<name>Database Backup Module</name>
-	<version>0.1</version>
+	<version>0.2</version>
 	<package>org.openmrs.module.@MODULE_ID@</package>
 	<author>Mathias Lin</author>
 	<description>
@@ -32,19 +32,28 @@
 		<property>@MODULE_ID@.tablesIncluded</property>
 		<defaultValue>all</defaultValue>
 		<description>
-			Defines which tables to include in the backup task.
-            Can use 'all' (default) to include all tables.
+			Enter the tables to be included into the backup comma separated (i.e.: cohort, concept) into field 'databasebackup.tablesIncluded' or use 'all' (default) to include all.
+			Explicitly entered table names overrule any eventual 'all' or 'none' entries in the opposite settings field.
 		</description>
 	</globalProperty>
-        <globalProperty>
+    <globalProperty>
 		<property>@MODULE_ID@.tablesExcluded</property>
 		<defaultValue>none</defaultValue>
 		<description>
-			Defines which tables to exclude from the backup task.
-            Can use 'none' (default) to exclude no tables.
+			Enter the tables to be excluded from the backup comma separated (i.e.: hl7_in_archive, hl7_in_error) into field 'databasebackup.tablesExcluded' or use 'all' (default) to exclude all. If you don't want to exclude any tables, you could also leave it to the default value 'none'.
+			Explicitly entered table names overrule any eventual 'all' or 'none' entries in the opposite settings field.
 		</description>
 	</globalProperty>			
-        
+    <globalProperty>
+        <property>@MODULE_ID@.folderPath</property>
+        <defaultValue>backup</defaultValue>
+        <description>
+            Path to the backup folder. You can either enter an absolute path 
+            (i.e. 'C:/backup') or a relative path (i.e. like the default value 'backup') which is relative to the
+            OpenMRS application data directory.
+        </description>
+    </globalProperty>
+            
     <dwr>
         <allow>
             <create creator="new" javascript="BackupFormController">
