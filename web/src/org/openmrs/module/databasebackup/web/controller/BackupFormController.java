@@ -27,8 +27,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.UserContext;
+import org.openmrs.module.databasebackup.DatabaseBackupTask;
+import org.openmrs.module.databasebackup.util.DbDump;
 import org.openmrs.module.databasebackup.util.Zip;
-import org.openmrs.module.databasebackup.web.util.DbDump;
 import org.openmrs.notification.Alert;
 import org.openmrs.util.OpenmrsUtil;
 import org.springframework.validation.BindException;
@@ -47,10 +48,10 @@ public class BackupFormController extends SimpleFormController {
 	/** Logger for this class and subclasses */
 	protected final Log log = LogFactory.getLog(getClass());
 	
-	private Properties props;
-	private String filename;
-	private String folder;
-	private UserContext ctx;
+//	private Properties props;
+//	private String filename;
+//	private String folder;
+//	private UserContext ctx;
 		
 	// holds progress information of current dump thread
 	private static Map<String,String> progressInfo = new HashMap<String,String>();
@@ -77,10 +78,16 @@ public class BackupFormController extends SimpleFormController {
 	                                BindException exceptions) throws Exception {
 		
 		String message;
-		
+
+        // create file name with timestamp
+        String filename = "openmrs.backup."
+                + new SimpleDateFormat("yyyy-MM-dd-HHmmss").format(Calendar.getInstance().getTime()) + ".sql";
+
+        String folder = DatabaseBackupTask.getAbsoluteBackupFolderPath();
+
 		// if user clicked the backup execution button...
 		if ("backup".equals(request.getParameter("act"))) {			
-			handleBackup();
+			new DatabaseBackupTask().handleBackup(filename, true, BackupFormController.class, null, null);
 			message = "<strong>Database is now being exported to file: " + folder + filename + ".zip"
 			        + ".</strong><br/>This might take a few minutes, please be patient. You will be notified upon completion.";			
 		} else {
@@ -95,115 +102,6 @@ public class BackupFormController extends SimpleFormController {
 
 	}
 
-
-    private void handleBackup() {
-
-        // set jdbc connection properties
-        props = new Properties();
-        props.setProperty("driver.class", "com.mysql.jdbc.Driver");
-        props.setProperty("driver.url", Context.getRuntimeProperties().getProperty("connection.url"));
-        props.setProperty("user", Context.getRuntimeProperties().getProperty("connection.username"));
-        props.setProperty("password", Context.getRuntimeProperties().getProperty("connection.password"));
-
-        // tables to be in/exluded are also passed as properties to the db dump class
-        String tablesIncluded = (String) Context.getAdministrationService().getGlobalProperty("databasebackup.tablesIncluded", "all");
-        String tablesExcluded = (String) Context.getAdministrationService().getGlobalProperty("databasebackup.tablesExcluded", "none");
-        props.setProperty("tables.included", tablesIncluded==null?"":tablesIncluded);
-        props.setProperty("tables.excluded", tablesExcluded==null?"":tablesExcluded);
-
-        // read backup folder path from config and make it absolute
-        folder = getAbsoluteBackupFolderPath();
-
-        // check if backup path exists (sub folder by sub folder), otherwise create
-        String[] folderPath = folder.split( "\\" + System.getProperty("file.separator") );
-        String s = folderPath[0];
-        File f;
-        boolean success = true;
-        for (int i=1;i<=folderPath.length-1&&success;i++) {
-            if (!"".equals(folderPath[i]))
-                s += System.getProperty("file.separator") + folderPath[i];
-            f = new File(s);
-
-            System.out.println("check exit folder: " + s + ", " + f.exists());
-
-            if ( !f.exists()) {
-                success = f.mkdir();
-            }
-            System.out.println("create folder: " + s + ", " + success);
-        }
-        if (!folder.endsWith("\\" + System.getProperty("file.separator")))
-            folder += System.getProperty("file.separator");
-
-
-        // if no problems occured with creating or finding the backup folder...
-        if (success) {
-
-            // create file name with timestamp
-            filename = "openmrs.backup."
-                    + new SimpleDateFormat("yyyy-MM-dd-HHmmss").format(Calendar.getInstance().getTime()) + ".sql";
-
-            props.setProperty("filename", filename);
-            props.setProperty("folder", folder);
-
-            // make ctx available for the thread
-            ctx = Context.getUserContext();
-
-            new Thread(new Runnable() {
-                
-                public void run() {
-                    try {
-                        UserContext ctxInThread = ctx;
-                        String filenameInThread = filename;
-                        DbDump.dumpDB(props);
-                        BackupFormController.getProgressInfo().put(filenameInThread, "Zipping file...");
-
-                        // zip sql file
-                        Zip.zip(folder, filenameInThread);
-
-                        // remove sql file after zipping it
-                        try {
-                            File f = new File(folder + filenameInThread);
-                            f.delete();
-                        } catch (SecurityException e) {
-                            log.error("Could not delete raw sql file.",e);
-                        }
-
-                        BackupFormController.getProgressInfo().put(filenameInThread, "Backup complete.");
-
-                        Context.setUserContext(ctxInThread);
-                        Alert alert = new Alert("The backup file is ready at: " + folder + filenameInThread + ".zip",
-                            Context.getUserContext().getAuthenticatedUser());
-                        Context.getAlertService().saveAlert(alert);
-
-                    }
-                    catch (Exception e) {
-                        System.err.println("Unable to backup database: " + e);
-                        log.error("Unable to backup database: ", e);
-                    }
-                }
-            }).start();
-        }
-    }
-
-
-	/**
-	 * 
-	 * Makes eventual relative path to absolute path, based on OpenMRS app 
-	 * data dir and returns it.
-	 * 
-	 * @return Absolute path to the backup folder
-	 */
-	private static String getAbsoluteBackupFolderPath() {
-		String folder;
-		String appDataDir = OpenmrsUtil.getApplicationDataDirectory();
-	    folder = (String) Context.getAdministrationService().getGlobalProperty("databasebackup.folderPath", "backup");            
-	    if (folder.startsWith("./")) folder = folder.substring(2);
-	    if (!folder.startsWith("/") && folder.indexOf(":")==-1) folder = appDataDir + folder;              
-	    folder = folder.replaceAll( "/", "\\" + System.getProperty("file.separator"));
-	    return folder;
-	}
-	
-	
 	public String getProgress(String filename) {
 		return BackupFormController.getProgressInfo().get(filename)==null?"":(String)BackupFormController.getProgressInfo().get(filename);		
 	}

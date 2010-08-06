@@ -21,10 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * This class connects to a database and dumps all the tables and contents out to stdout in the form of
@@ -40,7 +37,7 @@ public class DbDump {
 	private static final String fileEncoding = "UTF8";
 	
     /** Dump the whole database to an SQL string */
-    public static void dumpDB(Properties props) throws Exception {
+    public static void dumpDB(Properties props, boolean showProgress, Class showProgressToClass) throws Exception {
     	String filename = props.getProperty("filename");
     	String folder= props.getProperty("folder");
         String driverClassName = props.getProperty("driver.class");
@@ -102,7 +99,13 @@ public class DbDump {
 
                 	progressCnt++;
                 	//BackupFormController.getProgressInfo().put(filename, "Backing up table " + progressCnt + " of " + progressTotal + " (" + tableName + ")...");
-                	
+
+                    if (showProgress) {
+                        Map<String,String> info = (Map<String,String>)showProgressToClass.getMethod("getProgressInfo", null).invoke(showProgressToClass);
+                        info.put(filename, "Backing up table " + progressCnt + " of " + progressTotal + " (" + tableName + ")...");
+                        showProgressToClass.getMethod("setProgressInfo", new Class[]{Map.class}).invoke(showProgressToClass, info);
+                    }
+
                     if ("TABLE".equalsIgnoreCase(tableType)) {
 
                     	result.write( "\n\n-- Structure for table `" + tableName + "`\n" );
@@ -114,75 +117,7 @@ public class DbDump {
                     		result.write(tablesRs.getString("Create Table") + "\n\n");	
                     	}
                     	tablesRs.close();
-                    	tableStmt.close();
-                    	
-                    	/*
-
-                    	// This outcommented code was initially used but it's missing indexes, constraints, etc.
-                    	// Therefore the much effort-less and complete dump now via 'show create table', which is mysql
-                    	// specific though
-
-                    	result.write( "\nCREATE TABLE "+tableName+" (\n" );
-                        ResultSet tableMetaData = dbMetaData.getColumns(null, null, tableName, "%");	                        
-                        boolean firstLine = true;
-                        while (tableMetaData.next()) {
-                            if (firstLine) {
-                                firstLine = false;
-                            } else {
-                                // If not the first line, then finish the previous line with a comma
-                            	result.write( ",\n" );
-                            }
-                            String columnName = tableMetaData.getString("COLUMN_NAME");
-                            String columnType = tableMetaData.getString("TYPE_NAME");
-                            // WARNING: this may give daft answers for some types on some databases (eg JDBC-ODBC link)
-                            int columnSize = tableMetaData.getInt("COLUMN_SIZE");
-                            String nullable = tableMetaData.getString("IS_NULLABLE");
-                            String nullString = "NULL";
-                            if ("NO".equalsIgnoreCase(nullable)) {
-                                nullString = "NOT NULL";
-                            }
-                            result.write( "    " + columnNameQuote + columnName +columnNameQuote + " " + columnType + " (" + columnSize + ")" + " " + nullString );
-                        }
-                        tableMetaData.close();
-
-                        // primary key constraint
-                        try {
-                            ResultSet primaryKeys = dbMetaData.getPrimaryKeys(catalog, schema, tableName);
-                            String primaryKeyName = null;
-                            StringBuffer primaryKeyColumns = new StringBuffer();
-                            while (primaryKeys.next()) {
-                                String thisKeyName = primaryKeys.getString("PK_NAME");
-                                if ((thisKeyName != null && primaryKeyName == null)
-                                        || (thisKeyName == null && primaryKeyName != null)
-                                        || (thisKeyName != null && ! thisKeyName.equals(primaryKeyName))
-                                        || (primaryKeyName != null && ! primaryKeyName.equals(thisKeyName))) {
-                                    if (primaryKeyColumns.length() > 0) {
-                                        result.write(",\n    PRIMARY KEY ");
-                                        if (primaryKeyName != null) { result.write(primaryKeyName); }
-                                        result.write( "("+primaryKeyColumns.toString()+")" );
-                                    }
-                                    // Start again with the new name
-                                    primaryKeyColumns = new StringBuffer();
-                                    primaryKeyName = thisKeyName;
-                                }
-                                // append the column
-                                if (primaryKeyColumns.length() > 0) {
-                                    primaryKeyColumns.append(", ");
-                                }
-                                primaryKeyColumns.append(primaryKeys.getString("COLUMN_NAME"));
-                            }
-                            if (primaryKeyColumns.length() > 0) {
-                                result.write(",\n    PRIMARY KEY ");
-                                if (primaryKeyName != null) { result.write(primaryKeyName); }
-                                result.write( " ("+primaryKeyColumns.toString()+")" );
-                            }
-                            primaryKeys.close();
-                        } catch (SQLException e) {
-                        	log.error("Unable to get primary keys for table "+tableName+".", e);
-                        }
-
-                        result.write("\n);\n");
-                        */
+                    	tableStmt.close();                    	
 
                         dumpTable(dbConn, result, tableName);
                         System.gc();
