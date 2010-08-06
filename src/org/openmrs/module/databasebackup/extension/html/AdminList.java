@@ -23,6 +23,8 @@ import org.openmrs.module.web.extension.AdministrationSectionExt;
  * This class defines the links that will appear on the administration page under the
  * "backup.title" heading. This extension is enabled by defining (uncommenting) it in the
  * /metadata/config.xml file.
+ *
+ * Author: Mathias Lin <mathias.lin@metahealthcare.com>* 
  */
 public class AdminList extends AdministrationSectionExt {
 	

@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="lib-common">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib-common/commons-logging-1.0.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/openmrs-api-1.5.0.7125-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/tests-openmrs-api-1.5.0.7125-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/spring-webmvc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/servlet-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/web-openmrs-api-1.5.0.7125-dev.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/hibernate3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/junit-3.8.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib-common/spring-2.5.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

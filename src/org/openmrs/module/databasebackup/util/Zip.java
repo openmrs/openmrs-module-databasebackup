@@ -17,7 +17,9 @@ import java.io.*;
 import java.util.zip.*;
 
 /**
-* Zip utility to compress a single file. 
+* Zip utility to compress a single file.
+* 
+* Author: Mathias Lin <mathias.lin@metahealthcare.com>
 */
 public class Zip {
 	

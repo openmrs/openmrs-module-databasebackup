@@ -11,89 +11,41 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.databasebackup.web.controller;
+package org.openmrs.module.databasebackup;
+
+import org.openmrs.api.context.Context;
+import org.openmrs.api.context.UserContext;
+import org.openmrs.module.databasebackup.util.DbDump;
+import org.openmrs.module.databasebackup.util.Zip;
+import org.openmrs.notification.Alert;
+import org.openmrs.scheduler.tasks.AbstractTask;
+import org.openmrs.util.OpenmrsUtil;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.openmrs.api.context.Context;
-import org.openmrs.api.context.UserContext;
-import org.openmrs.module.databasebackup.util.Zip;
-import org.openmrs.module.databasebackup.web.util.DbDump;
-import org.openmrs.notification.Alert;
-import org.openmrs.util.OpenmrsUtil;
-import org.springframework.validation.BindException;
-import org.springframework.validation.Errors;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.SimpleFormController;
-
-/**
- * This controller backs the /web/module/backupForm.jsp page. This controller is tied to that jsp
- * page in the /metadata/moduleApplicationContext.xml file
- *
- * Author: Mathias Lin <mathias.lin@metahealthcare.com>
- */
-public class BackupFormController extends SimpleFormController {
-	
-	/** Logger for this class and subclasses */
-	protected final Log log = LogFactory.getLog(getClass());
-	
+public class DatabaseBackupTask extends AbstractTask {
+    	
 	private Properties props;
 	private String filename;
 	private String folder;
 	private UserContext ctx;
-		
-	// holds progress information of current dump thread
-	private static Map<String,String> progressInfo = new HashMap<String,String>();
-	
-	/**
-	 * Returns any extra data in a key-->value pair kind of way
-	 * 
-	 * @see org.springframework.web.servlet.mvc.SimpleFormController#referenceData(javax.servlet.http.HttpServletRequest,
-	 *      java.lang.Object, org.springframework.validation.Errors)
-	 */
-	@Override
-	protected Map<String, Object> referenceData(HttpServletRequest request, Object obj, Errors err) throws Exception {		
-		// this method doesn't return any extra data right now, just an empty map
-		return new HashMap<String, Object>();
-	}
-	
-	/**
-	 * @see org.springframework.web.servlet.mvc.SimpleFormController#onSubmit(javax.servlet.http.HttpServletRequest,
-	 *      javax.servlet.http.HttpServletResponse, java.lang.Object,
-	 *      org.springframework.validation.BindException)
-	 */
-	@Override
-	protected ModelAndView onSubmit(HttpServletRequest request, HttpServletResponse response, Object object,
-	                                BindException exceptions) throws Exception {
-		
-		String message;
-		
-		// if user clicked the backup execution button...
-		if ("backup".equals(request.getParameter("act"))) {			
-			handleBackup();
-			message = "<strong>Database is now being exported to file: " + folder + filename + ".zip"
-			        + ".</strong><br/>This might take a few minutes, please be patient. You will be notified upon completion.";			
-		} else {
-			message = "<strong>Could not find or create the path to the backup folder: " + folder + ".</strong><br/>Please check or ask your system administrator for help.";
-		}
-		
-		ModelAndView mv = new ModelAndView(getFormView());
-		mv.addObject("fileId", filename);
-		mv.addObject("msg", message);
-		
-		return mv;
 
-	}
+    public void execute() {
+        Context.openSession();
+        if (!Context.isAuthenticated()) {
+           authenticate();
+        }
+
+        // do something
+        handleBackup();
+
+        Context.closeSession();
+    }
+
 
 
     private void handleBackup() {
@@ -149,13 +101,13 @@ public class BackupFormController extends SimpleFormController {
             ctx = Context.getUserContext();
 
             new Thread(new Runnable() {
-                
+
                 public void run() {
                     try {
                         UserContext ctxInThread = ctx;
                         String filenameInThread = filename;
                         DbDump.dumpDB(props);
-                        BackupFormController.getProgressInfo().put(filenameInThread, "Zipping file...");
+                        //BackupFormController.getProgressInfo().put(filenameInThread, "Zipping file...");
 
                         // zip sql file
                         Zip.zip(folder, filenameInThread);
@@ -165,10 +117,10 @@ public class BackupFormController extends SimpleFormController {
                             File f = new File(folder + filenameInThread);
                             f.delete();
                         } catch (SecurityException e) {
-                            log.error("Could not delete raw sql file.",e);
+                            // log.error("Could not delete raw sql file.",e);
                         }
 
-                        BackupFormController.getProgressInfo().put(filenameInThread, "Backup complete.");
+                        //BackupFormController.getProgressInfo().put(filenameInThread, "Backup complete.");
 
                         Context.setUserContext(ctxInThread);
                         Alert alert = new Alert("The backup file is ready at: " + folder + filenameInThread + ".zip",
@@ -178,7 +130,7 @@ public class BackupFormController extends SimpleFormController {
                     }
                     catch (Exception e) {
                         System.err.println("Unable to backup database: " + e);
-                        log.error("Unable to backup database: ", e);
+                        // log.error("Unable to backup database: ", e);
                     }
                 }
             }).start();
@@ -187,51 +139,20 @@ public class BackupFormController extends SimpleFormController {
 
 
 	/**
-	 * 
-	 * Makes eventual relative path to absolute path, based on OpenMRS app 
+	 *
+	 * Makes eventual relative path to absolute path, based on OpenMRS app
 	 * data dir and returns it.
-	 * 
+	 *
 	 * @return Absolute path to the backup folder
 	 */
 	private static String getAbsoluteBackupFolderPath() {
 		String folder;
 		String appDataDir = OpenmrsUtil.getApplicationDataDirectory();
-	    folder = (String) Context.getAdministrationService().getGlobalProperty("databasebackup.folderPath", "backup");            
+	    folder = (String) Context.getAdministrationService().getGlobalProperty("databasebackup.folderPath", "backup");
 	    if (folder.startsWith("./")) folder = folder.substring(2);
-	    if (!folder.startsWith("/") && folder.indexOf(":")==-1) folder = appDataDir + folder;              
+	    if (!folder.startsWith("/") && folder.indexOf(":")==-1) folder = appDataDir + folder;
 	    folder = folder.replaceAll( "/", "\\" + System.getProperty("file.separator"));
 	    return folder;
 	}
-	
-	
-	public String getProgress(String filename) {
-		return BackupFormController.getProgressInfo().get(filename)==null?"":(String)BackupFormController.getProgressInfo().get(filename);		
-	}
 
-	/**
-	 * This class returns the form backing object. This can be a string, a boolean, or a normal java
-	 * pojo. The type can be set in the /config/moduleApplicationContext.xml file or it can be just
-	 * defined by the return type of this method
-	 * 
-	 * @see org.springframework.web.servlet.mvc.AbstractFormController#formBackingObject(javax.servlet.http.HttpServletRequest)
-	 */
-	@Override
-	protected String formBackingObject(HttpServletRequest request) throws Exception {
-		return "";
-	}
-
-    /**
-     * @return the progressInfo
-     */
-    public static Map<String,String> getProgressInfo() {
-    	return progressInfo;
-    }
-	
-    /**
-     * @param progressInfo the progressInfo to set
-     */
-    public static void setProgressInfo(Map<String,String> progressInfo) {
-    	BackupFormController.progressInfo = progressInfo;
-    }
-	
 }

@@ -19,6 +19,6 @@
 
 <h2><spring:message code="databasebackup.link.settings" /></h2>
 
-<openmrs:portlet id="globalProperty" url="globalProperties" parameters="propertyPrefix=databasebackup." /><br/><br/>
+<openmrs:portlet id="globalProperty" url="globalProperties" parameters="propertyPrefix=databasebackup.|excludePrefix=databasebackup.started,databasebackup.mandatory" /><br/><br/>
 
 <%@ include file="/WEB-INF/template/footer.jsp"%>

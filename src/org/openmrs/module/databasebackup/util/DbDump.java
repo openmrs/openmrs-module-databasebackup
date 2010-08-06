@@ -11,26 +11,20 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.databasebackup.web.util;
+package org.openmrs.module.databasebackup.util;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+//import org.openmrs.module.databasebackup.web.controller.BackupFormController;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.openmrs.module.databasebackup.web.controller.BackupFormController;
 
 /**
  * This class connects to a database and dumps all the tables and contents out to stdout in the form of
@@ -107,7 +101,7 @@ public class DbDump {
                 if (tableVector.contains(tableName)) {
 
                 	progressCnt++;
-                	BackupFormController.getProgressInfo().put(filename, "Backing up table " + progressCnt + " of " + progressTotal + " (" + tableName + ")...");                    	
+                	//BackupFormController.getProgressInfo().put(filename, "Backing up table " + progressCnt + " of " + progressTotal + " (" + tableName + ")...");
                 	
                     if ("TABLE".equalsIgnoreCase(tableType)) {
 
