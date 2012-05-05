@@ -114,7 +114,7 @@ public class DbDump {
                     	PreparedStatement tableStmt = dbConn.prepareStatement("SHOW CREATE TABLE "+ tableName +";");
                     	ResultSet tablesRs = tableStmt.executeQuery();
                     	while (tablesRs.next()) {
-                    		result.write(tablesRs.getString("Create Table") + "\n\n");	
+                    		result.write(tablesRs.getString("Create Table") + ";\n\n");	
                     	}
                     	tablesRs.close();
                     	tableStmt.close();                    	

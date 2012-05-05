@@ -3,7 +3,7 @@
 <!-- ** Database Backup Module                              ** -->
 <!-- **	                                                    ** -->
 <!-- ** @author Mathias Lin, Meta Healthcare Systems        ** -->
-<!-- ** @version 0.1b                                       ** -->
+<!-- ** @version 0.9                                       ** -->
 <!-- ********************************************************* -->
 <project name="DatabaseBackup" default="package-module">
 		
