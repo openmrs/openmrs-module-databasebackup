@@ -155,7 +155,7 @@ public class DbDump {
                         result.write("NULL");
                     } else {
                         String outputValue = value.toString();
-                        outputValue = outputValue.replaceAll("'","\\'");
+                        outputValue = outputValue.replaceAll("\'","\\\\'");
                         result.write( "'"+outputValue+"'" );
                     }
                 }
@@ -168,7 +168,5 @@ public class DbDump {
         } catch (IOException e) {
             log.error("Unable to dump table "+tableName+".  "+e);
         }
-    }	
-
-
+    }
 }

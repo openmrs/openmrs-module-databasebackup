@@ -191,10 +191,14 @@ public class DatabaseBackupTask extends AbstractTask {
 	public static String getAbsoluteBackupFolderPath() {
 		String folder;
 		String appDataDir = OpenmrsUtil.getApplicationDataDirectory();
+		if (!appDataDir.endsWith(System.getProperty("file.separator"))) 
+			appDataDir = appDataDir + System.getProperty("file.separator");
 	    folder = (String) Context.getAdministrationService().getGlobalProperty("databasebackup.folderPath", "backup");
 	    if (folder.startsWith("./")) folder = folder.substring(2);
 	    if (!folder.startsWith("/") && folder.indexOf(":")==-1) folder = appDataDir + folder;
 	    folder = folder.replaceAll( "/", "\\" + System.getProperty("file.separator"));
+		if (!folder.endsWith(System.getProperty("file.separator"))) 
+			folder = folder + System.getProperty("file.separator");	
 	    return folder;
 	}
 
