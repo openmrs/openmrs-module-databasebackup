@@ -73,6 +73,8 @@ public class DbDump {
         		" */"
         		);                                   
         
+        result.write("\nSET FOREIGN_KEY_CHECKS=0;\n");
+        
         List<String> tableVector = new Vector<String>();
         int progressTotal = 0;
         while(rs.next()) {
@@ -126,6 +128,8 @@ public class DbDump {
             } while (rs.next());
             rs.close();
         }
+        
+        result.write("\nSET FOREIGN_KEY_CHECKS=1;\n");
         
         result.flush();
         result.close();
