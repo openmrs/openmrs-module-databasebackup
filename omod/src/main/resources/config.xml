@@ -6,7 +6,7 @@
 	<!-- Base Module Properties -->
 	<id>databasebackup</id>
 	<name>Database Backup Module</name>
-	<version>1.1</version>
+	<version>@MODULE_VERSION@</version>
 	<package>org.openmrs.module.@MODULE_ID@</package>
 	<author>Mathias Lin</author>
 	<description>
