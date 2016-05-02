@@ -160,6 +160,9 @@ public class DbDump {
                         result.write("NULL");
                     } else {
                         String outputValue = value.toString();
+                        if (value instanceof Boolean) {
+                        	outputValue = (((Boolean)value) ? "1" : "0");
+                        }
                         outputValue = outputValue.replaceAll("\'","\\\\'");
                         result.write( "'"+outputValue+"'" );
                     }
