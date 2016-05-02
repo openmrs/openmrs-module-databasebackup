@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +38,48 @@ public class DbDump {
 	protected final static Log log = LogFactory.getLog(DbDump.class);
 	
 	private static final String fileEncoding = "UTF8";
+	
+	private static final HashMap<String,String> sqlTokens;
+	private static Pattern sqlTokenPattern;
+	
+	static
+	{           
+	    //MySQL escape sequences: http://dev.mysql.com/doc/refman/5.1/en/string-syntax.html
+	    String[][] search_regex_replacement = new String[][]
+	    {
+	                //search string     search regex        sql replacement regex
+	            {   "\u0000"    ,       "\\x00"     ,       "\\\\0"     },
+	            {   "'"         ,       "'"         ,       "\\\\'"     },
+	            {   "\""        ,       "\""        ,       "\\\\\""    },
+	            {   "\b"        ,       "\\x08"     ,       "\\\\b"     },
+	            {   "\n"        ,       "\\n"       ,       "\\\\n"     },
+	            {   "\r"        ,       "\\r"       ,       "\\\\r"     },
+	            {   "\t"        ,       "\\t"       ,       "\\\\t"     },
+	            {   "\u001A"    ,       "\\x1A"     ,       "\\\\Z"     },
+	            {   "\\"        ,       "\\\\"      ,       "\\\\\\\\"  }
+	    };
+
+	    sqlTokens = new HashMap<String,String>();
+	    String patternStr = "";
+	    for (String[] srr : search_regex_replacement)
+	    {
+	        sqlTokens.put(srr[0], srr[2]);
+	        patternStr += (patternStr.isEmpty() ? "" : "|") + srr[1];            
+	    }
+	    sqlTokenPattern = Pattern.compile('(' + patternStr + ')');
+	}
+	
+	private static String escape(String s)
+	{
+	    Matcher matcher = sqlTokenPattern.matcher(s);
+	    StringBuffer sb = new StringBuffer();
+	    while(matcher.find())
+	    {
+	        matcher.appendReplacement(sb, sqlTokens.get(matcher.group(1)));
+	    }
+	    matcher.appendTail(sb);
+	    return sb.toString();
+	}
 	
     /** Dump the whole database to an SQL string */
     public static void dumpDB(Properties props, boolean showProgress, Class showProgressToClass) throws Exception {
@@ -163,7 +207,7 @@ public class DbDump {
                         if (value instanceof Boolean) {
                         	outputValue = (((Boolean)value) ? "1" : "0");
                         }
-                        outputValue = outputValue.replaceAll("\'","\\\\'");
+                        outputValue = escape(outputValue);
                         result.write( "'"+outputValue+"'" );
                     }
                 }
