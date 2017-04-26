@@ -37,9 +37,6 @@ public class DatabaseBackupTask extends AbstractTask {
 
     public void execute() {
         Context.openSession();
-        if (!Context.isAuthenticated()) {
-           authenticate();
-        }
         
         // create file name with timestamp
         filename = "openmrs.backup."
