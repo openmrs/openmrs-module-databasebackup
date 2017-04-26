@@ -183,42 +183,83 @@ public class DbDump {
     }
 
     /** dump this particular table to the string buffer */
-	private static void dumpTable(Connection dbConn, OutputStreamWriter result, String tableName) {
+    private static void dumpTable(Connection dbConn, OutputStreamWriter result, String tableName) {
         try {
-            // create table sql
-            PreparedStatement stmt = dbConn.prepareStatement("SELECT * FROM "+tableName);
-            ResultSet rs = stmt.executeQuery();
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            // Rows per insert
+            int max = 10000;
+            // Get total number of rows for table
+            Statement s = dbConn.createStatement();
+            ResultSet r = s.executeQuery("SELECT COUNT(*) AS rowcount FROM " + tableName);
+            r.next();
+            int count = r.getInt("rowcount");
+            r.close();
 
-            // data inserts
-            result.write( "\n\n-- Data for table '"+tableName+"'\n" );
-            while (rs.next()) {
-                result.write( "INSERT INTO "+tableName+" VALUES (" );
-                for (int i=0; i<columnCount; i++) {
-                    if (i > 0) {
-                        result.write(", ");
-                    }
-                    Object value = rs.getObject(i+1);
-                    if (value == null) {
-                        result.write("NULL");
-                    } else {
-                        String outputValue = value.toString();
-                        if (value instanceof Boolean) {
-                        	outputValue = (((Boolean)value) ? "1" : "0");
+            // Variables for dividing rows
+
+            int startIndex = 0;
+            boolean notProcessed = true;
+            int offset = 0;
+
+            result.write("\n\n-- Data for table '" + tableName + "'\n");
+
+            while (notProcessed) {
+
+                PreparedStatement stmt = dbConn.prepareStatement("SELECT * FROM " + tableName + " LIMIT " + String.valueOf(offset) + ", " + String.valueOf(max) + ";");
+                ResultSet rs = stmt.executeQuery();
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+
+                String dataHeaders = "(" + metaData.getColumnName(1);
+                for (int i = 2; i <= columnCount; i++) {
+                    dataHeaders += "," + metaData.getColumnName(i);
+                }
+                dataHeaders += ")";
+
+                // Check that row exist before insert statement can be created
+                if(rs.isBeforeFirst()) {
+                    result.write("INSERT INTO " + tableName + " " + dataHeaders + " VALUES ");
+                }
+                // data inserts
+                while (rs.next()) {
+
+                    result.write("(");
+                    for (int i = 0; i < columnCount; i++) {
+                        if (i > 0) {
+                            result.write(", ");
                         }
-                        outputValue = escape(outputValue);
-                        result.write( "'"+outputValue+"'" );
+                        Object value = rs.getObject(i + 1);
+                        if (value == null) {
+                            result.write("NULL");
+                        } else {
+                            String outputValue = value.toString();
+                            if (value instanceof Boolean) {
+                                outputValue = (((Boolean) value) ? "1" : "0");
+                            }
+                            outputValue = escape(outputValue);
+                            result.write("'" + outputValue + "'");
+                        }
+                    }
+                    if (rs.isLast()) {
+                        result.write(");\n");
+                    } else {
+                        result.write("),");
                     }
                 }
-                result.write(");\n");
+                rs.close();
+                stmt.close();
+
+                if (offset >= count || count <= max) {
+                    notProcessed = false;
+                } else {
+                    startIndex = startIndex + 1;
+                }
+                offset = (startIndex * max);
             }
-            rs.close();
-            stmt.close();
+            // Construct columns
         } catch (SQLException e) {
-            log.error("Unable to dump table "+tableName+".  "+e);
+            log.error("Unable to dump table " + tableName + ".  " + e);
         } catch (IOException e) {
-            log.error("Unable to dump table "+tableName+".  "+e);
+            log.error("Unable to dump table " + tableName + ".  " + e);
         }
     }
 }
